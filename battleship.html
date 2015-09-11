@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>JS Battleship</title>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="battleship.js"></script>
+    <style type="text/css">
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        background-image: url(animus-mix.gif);
+        font-family: itcMachine;
+        color: white;
+        font-size: 16pt;
+        -webkit-text-stroke: 1px black;
+      }
+      h1 {
+        font-size: 5em;
+        margin: 30px 0px 30px 50px;
+        width: 5.2em;
+        height: .75em;
+        padding: .15em;
+        line-height: 1em;
+        border: 2px solid black;
+        background: linear-gradient(180deg, #FF6200 0%, #D40000 50%, #800000 100%);
+        box-shadow:
+          inset 0px -2px 2px rgba(0,0,0,0.4),
+          inset -2px -2px 2px rgba(0,0,0,0.4),
+          inset 0px 2px 2px rgba(255,255,255,0.3),
+          inset 2px 2px 2px rgba(255,255,255,0.3);
+        text-shadow: 2px 2px 2px rgba(0,0,0,0.4);
+      }
+      .container {
+        float: left;
+        display: inline-block;
+        width: 500px;
+        margin-left: 50px;
+      }
+      canvas {
+        border: 3px solid black;
+      }
+
+      @font-face {
+        font-family: itcMachine;
+        src: url(ITC-Machine-Medium.ttf);
+      }
+    </style>
+  </head>
+  <body onload="draw();">
+    <h1>JS Battleship</h1>
+    <div class="container">
+      <h2>Your Ships</h2>
+      <canvas id="main-grid" height="400" width="400"></canvas>
+      <div id="message-area-one"></div>
+    </div>
+    <div class="container">
+      <h2>CPU's Ships</h2>
+      <canvas id="hit-miss-grid" height="400" width="400"></canvas>
+      <div id="message-area-two">Click on this grid to attack.</div>
+    </div>
+  </body>
+</html>
