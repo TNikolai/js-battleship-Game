@@ -19,7 +19,7 @@
       h1 {
         font-size: 5em;
         margin: 30px 0px 30px 50px;
-        width: 5.2em;
+        width: 5.25em;
         height: .75em;
         padding: .15em;
         line-height: 1em;
@@ -50,15 +50,16 @@
   </head>
   <body onload="draw();">
     <h1>JS Battleship</h1>
+    <h2 id="numberOfTurns"></h2>
     <div class="container">
-      <h2>Your Ships</h2>
+      <h2>Player 1 Ships</h2>
       <canvas id="main-grid" height="400" width="400"></canvas>
       <div id="message-area-one"></div>
     </div>
     <div class="container">
-      <h2>CPU's Ships</h2>
+      <h2>Player 2 Ships</h2>
       <canvas id="hit-miss-grid" height="400" width="400"></canvas>
-      <div id="message-area-two">Click on this grid to attack.</div>
+      <div id="message-area-two"></div>
     </div>
   </body>
 </html>

@@ -1,25 +1,30 @@
-var SHIPS = [{ shipType: "Aircraft Carrier", health: 5, tilesOccupied: [] }, { shipType: "Battleship", health: 4, tilesOccupied: [] },
-             { shipType: "Submarine", health: 3, tilesOccupied: [] }, { shipType: "Patrol Boat", health: 2, tilesOccupied: [] }];
-var playerOne = new Player("Player 1");
-var playerTwo = new Player("Player 2");
+import {
+    SHIPS,
+    ROWS,
+    COLS,
+    GRIDSIZE,
+    P1CELLSIZE,
+    P2CELLSIZE,
+    CELLSIZE,
+    CIRCLESIZE,
+    DIRECTIONS,
+    SHIPCOLOR,
+    HITCOLOR,
+    BGCOLOR,
+    MISSCOLOR,
+} from './constants';
+import attack1 from "Player";
+import attack2 from "Player";
+
+var playerOne = new Player("Player 1", attack1);
+var playerTwo = new Player("Player 2", attack2);
 playerOne.opponent = playerTwo;
 playerTwo.opponent = playerOne;
-var GRIDSIZE = 10;
-var P1CELLSIZE = 40;
-var P2CELLSIZE = 40;
-var CELLSIZE = 40;
-var CIRCLESIZE = 15;
-var ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
-var COLS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
-var DIRECTIONS = ["up", "right", "down", "left"];
-var SHIPCOLOR = "grey";
-var HITCOLOR = "rgb(219, 57, 57)";
-var BGCOLOR = "rgb(191, 234, 255)";
-var MISSCOLOR = "white";
 var tileAttempts = 0;
 var start;
+var turnCounter = null;
 
-function Player(name) {
+function Player(name, attack) {
   this.name = name;
   this.shipArray = new ShipArray();
   this.board = new GameBoard(GRIDSIZE);
@@ -28,6 +33,7 @@ function Player(name) {
   this.opponent = null;
   this.lastGuesses = [{ hit: false, tile: ""}, { hit: false, tile: ""}];
   this.nextGuesses = [];
+  this.attack = attack;
 }
 
 function ShipArray() {
@@ -45,18 +51,14 @@ function Tile(board, row, col) {
 }
 
 Tile.prototype = {
-
-
-
-  detectAdjacentShips:
+      detectAdjacentShips:
     function () {
       if (this.row - 1 === 0) {
 
       }
     },
 
-  detectAdjacentMisses:
-    function (misses, startTile) {
+  detectAdjacentMisses: function (misses, startTile) {
       var adjacent = buildAdjacencyArray(startTile);
       var match = false;
       adjacent.forEach(function(tileObj, index, array) {
@@ -68,8 +70,7 @@ Tile.prototype = {
       return match;
     },
 
-  findAdjacentHits:
-    function (hits, startTile) {
+  findAdjacentHits: function (hits, startTile) {
       var adjacent = buildAdjacencyArray(startTile);
       var match, direction;
       adjacent.forEach(function(tileObj, index, array) {
@@ -82,7 +83,6 @@ Tile.prototype = {
     }
 
 }
-
 
 function GameBoard(size) {
   this.board = [];
@@ -202,10 +202,10 @@ function buildAdjacencyArray(startTile) {
   adjacent.push({ direction: "left", tile: startTile[0] + nextColDown(startTile.slice(1))});
   adjacent.push({ direction: "down", tile: nextRowUp(startTile[0]) + startTile.slice(1)});
   adjacent.push({ direction: "up", tile: nextRowDown(startTile[0]) + startTile.slice(1)});
-  // adjacent.push(nextRowDown(startTile[0]) + nextColDown(startTile.slice(1)));
-  // adjacent.push(nextRowUp(startTile[0]) + nextColDown(startTile.slice(1)));
-  // adjacent.push(nextRowDown(startTile[0]) + nextColUp(startTile.slice(1)));
-  // adjacent.push(nextRowUp(startTile[0]) + nextColUp(startTile.slice(1)));
+  adjacent.push(nextRowDown(startTile[0]) + nextColDown(startTile.slice(1)));
+  adjacent.push(nextRowUp(startTile[0]) + nextColDown(startTile.slice(1)));
+  adjacent.push(nextRowDown(startTile[0]) + nextColUp(startTile.slice(1)));
+  adjacent.push(nextRowUp(startTile[0]) + nextColUp(startTile.slice(1)));
   return adjacent;
 }
 
@@ -251,10 +251,6 @@ function oppositeDirection(direction) {
   if (direction == "up") { return "down"; }
   if (direction == "down") { return "up"; }
 }
-
-function randomTile() {
-  return ROWS[Math.floor(Math.random() * GRIDSIZE)] + COLS[Math.floor(Math.random() * GRIDSIZE)];
-};
 
 function nextColDown(col) {
   return COLS[COLS.indexOf(col) - 1];
@@ -376,7 +372,11 @@ function totalPlayerHealth(player) {
 }
 
 function playerLost(player) {
-  return player.shipArray.length == 0;
+  let isPlayerLost =  player.shipArray.length == 0;
+  if (isPlayerLost) {
+    drawMessage(player, "Ah, poor " + player.name  + ". Didn't stand a chance.");
+  }
+  return isPlayerLost;
 }
 
 function guessesAfterHit(cpu, tile) {
@@ -399,7 +399,7 @@ function guessesAfterHit(cpu, tile) {
 
 function guessCheck(player, guess) {
   console.log("Checking guess: " + guess);
-  return (player.missTiles.indexOf(guess) == -1 && player.hitTiles.indexOf(guess) == -1);
+  return (player.missTiles.indexOf(guess) == -1 && player.hitTiles.indexOf(guess) == -1); //true if guess was not used before
 }
 
 var extrapolateMovement = function(tile1, tile2) {
@@ -414,54 +414,49 @@ var addLastGuess = function(player, guess) {
   }
 }
 
-function cpuTilePick(cpu) {
-  var startTile, nextTile, newGuess;
-  var guessCount = 0;
-  if (cpu.lastGuesses[0].hit && !cpu.lastGuesses[0].sunk) {
-    startTile = cpu.lastGuesses[0].tile;
-    if (cpu.lastGuesses[1].hit) {
-      newGuess = extrapolateMovement(cpu.lastGuesses[1].tile, cpu.lastGuesses[0].tile);
-      if (guessCheck(cpu, newGuess)) {
-        nextTile = newGuess;
-        cpu.nextGuesses = cpu.nextGuesses.concat(guessesAfterHit(cpu, nextTile));
-      }
-      else {
-        cpu.nextGuesses = cpu.nextGuesses.concat(guessesAfterHit(cpu, startTile));
-      }
-    }
-    else {
-      cpu.nextGuesses = guessesAfterHit(cpu, startTile);
-    }
-    while (cpu.nextGuesses.length > 0 && nextTile == undefined) {
-      newGuess = cpu.nextGuesses.shift();
-      if (guessCheck(cpu, newGuess)) {
-        nextTile = newGuess;
-      }
-    }
-  }
-  else if (!cpu.lastGuesses[0].sunk) {
-    while (cpu.nextGuesses.length > 0 && nextTile == undefined) {
-      newGuess = cpu.nextGuesses.shift();
-      if (guessCheck(cpu, newGuess)) {
-        nextTile = newGuess;
-      }
-    }
-  }
-  if (nextTile == undefined) {
-    nextTile = randomTile();
-    while (guessCheck(cpu, nextTile) == false || detectAdjacentMisses(cpu.missTiles, nextTile)) {
-      nextTile = randomTile();
-      guessCount += 1;
-      if (guessCheck(cpu, nextTile) && guessCount > 50) {
-        break;
-      }
-    }
-  }
-  return nextTile;
+
+
+//=====================================____GAME____======================================================
+
+function newGame() {
+  playerOne.shipArray.forEach(addRandomPosition);
+  playerTwo.shipArray.forEach(addRandomPosition);
+  turnGame(playerOne, playerTwo);
 }
 
-function attack(attacker, victim, tile) {
+function turnGame(playerOne, playerTwo) { //while players not lost request them to new turn else game finished
+  if (playerLost(playerOne) == false && playerLost(playerTwo) == false) {
+    setTimeout( cpuTurn, 1000, playerOne, playerTwo);
+  }
+  else {
+    appendMessage(turnCounter, "And it only took " + turnCount + " turns.");
+  }
+}
+
+function cpuTurn(attacker, victim) {
+  var nextGuess = attacker.attack(); //request shot coordinates player bot (attacker) !!! 
+  let hit = attack(attacker, victim, nextGuess);
+  drawBG(victim.context);
+  drawShips(victim.shipArray, victim.context);
+  refreshGrid(attacker, victim.context, CELLSIZE);
+  // if (hit != null) {
+  //   let coords = [columnToCoord(nextGuess.row), rowToCoord(nextGuess.col)];
+  //   console.log("Anima : " + coords);
+  //   drawBG(attacker.context);
+  //   refreshGrid(victim, attacker.context, CELLSIZE);
+  //   animateHitMissText(hit, coords, attacker.context, victim); 
+  //   }
+  if (playerLost(playerOne)) {
+    drawMessage(attacker.messageArea, "Ah, poor " + victim.name  + ". Didn't stand a chance.");
+  }
+  else {
+    turnGame(victim, attacker);
+  }
+}
+
+function attackHandler(attacker, victim, tile) {
   if (guessCheck(attacker, tile)) {
+    console.log(victim.messageArea, "Attacking " + victim.name + " in tile " + tile);
     drawMessage(victim.messageArea, "Attacking " + victim.name + " in tile " + tile);
     var ship = checkForShip(victim, tile);
     if (ship != null) {
@@ -484,13 +479,11 @@ function attack(attacker, victim, tile) {
   }
 };
 
-playerOne.shipArray.forEach(addRandomPosition);
-playerTwo.shipArray.forEach(addRandomPosition);
-
 // ---------------------
 // Browser functionality
 // ---------------------
 function draw() {
+  turnCounter = document.getElementById("numberOfTurns");
   var mainGrid = document.getElementById("main-grid");
   var hitMissGrid = document.getElementById("hit-miss-grid");
   var mainCtx = mainGrid.getContext("2d");
@@ -507,10 +500,14 @@ function draw() {
   drawShips(playerOne.shipArray, mainCtx);
   drawGrid(mainCtx, CELLSIZE);
   drawGrid(hitMissCtx, CELLSIZE);
-  handOff(playerOne, playerTwo);
+  newGame();
 }
 
-function animateHitMissText(hit, coords, context) {
+
+
+//UI drawers and animations
+
+function animateHitMissText(hit, coords, context, oponent) {
   var newCoords;
   if (coords[0] <= 320) {
     newCoords = [(coords[0] + 20), (coords[1] + 20)];
@@ -561,58 +558,11 @@ function animateHitMissText(hit, coords, context) {
           clearInterval(fadeOut);
           context.clearRect(0, 0, canvasSize, canvasSize);
           drawBG(context);
-          refreshGrid(playerOne, context, CELLSIZE);
+          refreshGrid(oponent, context, CELLSIZE);
         }
       }, 1);
     }
   }, 1);
-}
-
-
-
-function handOff(playerOne, playerTwo) {
-  if (playerLost(playerOne) == false && playerLost(playerTwo) == false) {
-    console.log("Adding event listener");
-    playerTwo.grid.addEventListener("mousedown", clickHandler, false);
-  }
-  else {
-    appendMessage(playerTwo.messageArea, "And it only took " + turnCount + " turns.");
-  }
-}
-
-function clickHandler(event) {
-  console.log(event);
-  var coords = getPosition(event);
-  var column = coordToColumn(coords[0]);
-  var row = coordToRow(coords[1]);
-  var tile = row + column;
-  var hit = attack(playerOne, playerTwo, tile);
-  if (hit != null) {
-    drawBG(playerTwo.context);
-    refreshGrid(playerOne, playerTwo.context, CELLSIZE);
-    animateHitMissText(hit, coords, playerTwo.context);
-    event.srcElement.removeEventListener("mousedown", clickHandler, false);
-    if (playerLost(playerTwo)) {
-      drawMessage(playerTwo.messageArea, "Shucks, I lost to the puny human.");
-    }
-    else {
-      cpuTurn(playerTwo, playerOne);
-    }
-  }
-}
-
-function cpuTurn(cpu, human) {
-  var nextGuess = cpuTilePick(cpu);
-  attack(cpu, human, nextGuess);
-  drawBG(human.context);
-  drawShips(human.shipArray, human.context);
-  refreshGrid(cpu, human.context, CELLSIZE);
-  if (playerLost(playerOne)) {
-    drawMessage(cpu.messageArea, "Ah, poor human. Didn't stand a chance.");
-  }
-  else {
-    handOff(human, cpu);
-  }
 }
 
 function drawGrid(context, cellSize) {
@@ -680,29 +630,34 @@ function refreshGrid(player, context, cellSize) {
   drawGrid(context, cellSize);
 }
 
-function coordToColumn(x) {
-  return COLS[Math.floor(x / CELLSIZE)];
+function columnToCoord(x) {
+  return  COLS[Math.floor(x * CELLSIZE)];
 }
 
-function coordToRow(y) {
-  return ROWS[Math.floor(y / CELLSIZE)];
+function rowToCoord(y) {
+  return ROWS[Math.floor(y * CELLSIZE)];
 }
 
-function getPosition(event) {
-  var x, y;
-  var canvas = document.getElementById("hit-miss-grid");
-  if (event.x != undefined && event.y != undefined) {
-    x = event.x;
-    y = event.y;
-  }
-  // Firefox method to get the position
-  else {
-    x = event.clientX + document.body.scrollLeft +
-        document.documentElement.scrollLeft;
-    y = event.clientY + document.body.scrollTop +
-        document.documentElement.scrollTop;
-  }
-  x -= canvas.offsetLeft;
-  y -= canvas.offsetTop;
-  return [x, y];
-}
+
+
+
+// function clickHandler(event) {
+//   console.log(event);
+//   var coords = getPosition(event);
+//   var column = coordToColumn(coords[0]);
+//   var row = coordToRow(coords[1]);
+//   var tile = row + column;
+//   var hit = attack(playerOne, playerTwo, tile);
+//   if (hit != null) {
+//     drawBG(playerTwo.context);
+//     refreshGrid(playerOne, playerTwo.context, CELLSIZE);
+//     animateHitMissText(hit, coords, playerTwo.context);
+//     event.srcElement.removeEventListener("mousedown", clickHandler, false);
+//     if (playerLost(playerTwo)) {
+//       drawMessage(playerTwo.messageArea, "Shucks, I lost to the puny human.");
+//     }
+//     else {
+//       cpuTurn(playerTwo, playerOne);
+//     }
+//   }
+// }
