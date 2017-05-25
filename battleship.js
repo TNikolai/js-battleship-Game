@@ -1,23 +1,38 @@
-import {
-    SHIPS,
-    ROWS,
-    COLS,
-    GRIDSIZE,
-    P1CELLSIZE,
-    P2CELLSIZE,
-    CELLSIZE,
-    CIRCLESIZE,
-    DIRECTIONS,
-    SHIPCOLOR,
-    HITCOLOR,
-    BGCOLOR,
-    MISSCOLOR,
-} from './constants';
-import attack1 from "Player";
-import attack2 from "Player";
 
-var playerOne = new Player("Player 1", attack1);
-var playerTwo = new Player("Player 2", attack2);
+//=======================================================CONSTANTS:
+
+var SHIPS = [{ shipType: "Aircraft Carrier", health: 5, tilesOccupied: [] }, { shipType: "Battleship", health: 4, tilesOccupied: [] },
+{ shipType: "Submarine", health: 3, tilesOccupied: [] }, { shipType: "Patrol Boat", health: 2, tilesOccupied: [] }];
+
+var ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+var COLS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
+
+var GRIDSIZE = 10;
+var P1CELLSIZE = 40;
+var P2CELLSIZE = 40;
+var CELLSIZE = 40;
+var CIRCLESIZE = 15;
+var DIRECTIONS = ["up", "right", "down", "left"];
+var SHIPCOLOR = "green";
+var HITCOLOR = "rgb(219, 57, 57)";
+var BGCOLOR = "rgb(191, 234, 255)";
+var MISSCOLOR = "white";
+
+//===================================================Players CODE:
+
+
+function attack() {
+  return randomTile();
+};
+
+function randomTile() {
+  return ROWS[Math.floor(Math.random() * GRIDSIZE)] + COLS[Math.floor(Math.random() * GRIDSIZE)];
+};
+
+//===================================================GAME ENGINE
+
+var playerOne = new Player("Player 1", attack);
+var playerTwo = new Player("Player 2", attack);
 playerOne.opponent = playerTwo;
 playerTwo.opponent = playerOne;
 var tileAttempts = 0;
@@ -415,7 +430,6 @@ var addLastGuess = function(player, guess) {
 }
 
 
-
 //=====================================____GAME____======================================================
 
 function newGame() {
@@ -435,18 +449,22 @@ function turnGame(playerOne, playerTwo) { //while players not lost request them 
 
 function cpuTurn(attacker, victim) {
   var nextGuess = attacker.attack(); //request shot coordinates player bot (attacker) !!! 
-  let hit = attack(attacker, victim, nextGuess);
+  let hit = attackHandler(attacker, victim, nextGuess);
   drawBG(victim.context);
   drawShips(victim.shipArray, victim.context);
   refreshGrid(attacker, victim.context, CELLSIZE);
-  // if (hit != null) {
-  //   let coords = [columnToCoord(nextGuess.row), rowToCoord(nextGuess.col)];
-  //   console.log("Anima : " + coords);
-  //   drawBG(attacker.context);
-  //   refreshGrid(victim, attacker.context, CELLSIZE);
-  //   animateHitMissText(hit, coords, attacker.context, victim); 
-  //   }
-  if (playerLost(playerOne)) {
+  if (hit != null) {
+    let letterCoord = characterToCoord(nextGuess.slice(0, 1));
+    let numberCoord = rowNumberToCoord(nextGuess.slice(1, nextGuess.length));
+    console.log("-------------ROW : " + letterCoord);
+    console.log("-------------COLUMN : " + numberCoord);
+    console.log("-------------guess : " + nextGuess);
+
+    //drawBG(victim.context);
+    refreshGrid(victim, attacker.context, CELLSIZE);
+    //animateHitMissText(hit, [letterCoord, numberCoord], attacker.context, victim); 
+    }
+  if (playerLost(victim)) {
     drawMessage(attacker.messageArea, "Ah, poor " + victim.name  + ". Didn't stand a chance.");
   }
   else {
@@ -456,7 +474,6 @@ function cpuTurn(attacker, victim) {
 
 function attackHandler(attacker, victim, tile) {
   if (guessCheck(attacker, tile)) {
-    console.log(victim.messageArea, "Attacking " + victim.name + " in tile " + tile);
     drawMessage(victim.messageArea, "Attacking " + victim.name + " in tile " + tile);
     var ship = checkForShip(victim, tile);
     if (ship != null) {
@@ -630,15 +647,15 @@ function refreshGrid(player, context, cellSize) {
   drawGrid(context, cellSize);
 }
 
-function columnToCoord(x) {
-  return  COLS[Math.floor(x * CELLSIZE)];
+function characterToCoord(x) { // receiving a letter exmp A
+  console.log(x + "  characterToCoord");
+  return  ROWS.indexOf(x);
 }
 
-function rowToCoord(y) {
-  return ROWS[Math.floor(y * CELLSIZE)];
+function rowNumberToCoord(y) { // receiving a number exmp 10
+  console.log(y + "   rowNumberToCoord");
+  return COLS[+y - 1];
 }
-
-
 
 
 // function clickHandler(event) {
@@ -661,3 +678,4 @@ function rowToCoord(y) {
 //     }
 //   }
 // }
+
