@@ -456,8 +456,6 @@ function draw() {
   newGame();
 }
 
-
-
 //=====================================____GAME____======================================================
 
 function newGame() {
@@ -476,7 +474,7 @@ function drawBoardFor(player) {
 
 function turnGame(playerOne, playerTwo) { //while players not lost request them to new turn else game finished
   if (playerLost(playerOne) == false && playerLost(playerTwo) == false) {
-    setTimeout( cpuTurn, 1000, playerOne, playerTwo);
+    setTimeout( cpuTurn, 1, playerOne, playerTwo);
   }
   else {
     //appendMessage(turnCounter, "And it only took " + turnCount + " turns.");
@@ -488,14 +486,11 @@ function cpuTurn(attacker, victim) {
   var attackCoord = attacker.attack(); //request shot coordinates player bot (attacker) !!! 
   let hit = attackHandler(attacker, victim, attackCoord);
   attacker.attackResult(hit, attackCoord); // return to bot atackResult
-  //drawBoardFor(victim);
   refreshGrid(attacker, victim.context, CELLSIZE);
   if (hit != null) {
     let letterCoord = characterToCoord(attackCoord.slice(0, 1));
     let numberCoord = rowNumberToCoord(attackCoord.slice(1, attackCoord.length));
-    //drawBG(victim.context);
-    //refreshGrid(victim, attacker.context, CELLSIZE);
-    //animateHitMissText(hit, [letterCoord, numberCoord], attacker.context);
+    //animateHitMissText(hit, [letterCoord, numberCoord], attacker, victim);
     }
   if (playerLost(victim)) {
     drawMessage(attacker.messageArea, "Ah, poor " + victim.name  + ". Didn't stand a chance.");
@@ -530,6 +525,12 @@ function attackHandler(attacker, victim, tile) {
   }
 };
 
+function refreshGrid(player, context, cellSize) {
+  drawHits(player, context);
+  drawMisses(player, context);
+  drawGrid(context, cellSize);
+}
+
 function drawHits(player, context) {
   context.fillStyle = HITCOLOR;
   drawTileArray(player.hitTiles, context);
@@ -548,12 +549,6 @@ function appendMessage(element, message) {
   element.innerHTML = element.innerHTML + "\n" + message;
 }
 
-function refreshGrid(player, context, cellSize) {
-  drawHits(player, context);
-  drawMisses(player, context);
-  drawGrid(context, cellSize);
-}
-
 function characterToCoord(x) { // receiving a letter exmp A
   console.log(x + "  characterToCoord");
   return  ROWS.indexOf(x);
@@ -566,11 +561,9 @@ function rowNumberToCoord(y) { // receiving a number exmp 10
 
 //UI drawers and animations
 
-function animateHitMissText(hit, coords, context) {
-
+function animateHitMissText(hit, coords, attacker, victim) {
   console.log("Hit or Miss  ", hit);
   console.log("Coordinates  ", coords);
-  console.log("Context ", context);
 
   var newCoords;
   if (coords[0] <= 320) {
@@ -592,36 +585,36 @@ function animateHitMissText(hit, coords, context) {
     rgba = "rgba(237,83,0,";
   }
   var fadeIn = setInterval(function() {
-    context.clearRect(0, 0, canvasSize, canvasSize);
-    drawBG(context);
-    refreshGrid(playerOne, context, CELLSIZE);
-    context.save();
-    context.font = "38px itcMachine";
-    context.fillStyle = rgba + (step / 30) + ")";
-    context.strokeStyle = "1px rgba(255,255,255,0.3)";
-    context.fillText(text, newCoords[0], newCoords[1]);
-    context.strokeText(text, newCoords[0], newCoords[1]);
-    context.restore();
+    attacker.context.clearRect(0, 0, canvasSize, canvasSize);
+    drawBG(attacker.context);
+    refreshGrid(victim, attacker.context, CELLSIZE);
+    attacker.context.save();
+    attacker.context.font = "38px itcMachine";
+    attacker.context.fillStyle = rgba + (step / 30) + ")";
+    attacker.context.strokeStyle = "1px rgba(255,255,255,0.3)";
+    attacker.context.fillText(text, newCoords[0], newCoords[1]);
+    attacker.context.strokeText(text, newCoords[0], newCoords[1]);
+    attacker.context.restore();
     step += 1;
     if (step > (totalSteps / 2)) {
       clearInterval(fadeIn);
       step = 0;
       var fadeOut = setInterval(function() {
-        context.clearRect(0, 0, canvasSize, canvasSize);
-        drawBG(context);
-        refreshGrid(playerOne, context, CELLSIZE);
-        context.save();
-        context.font = (38 - (step / 5)) + "px itcMachine";
-        context.fillStyle = rgba + (1 - (step / 60)) + ")";
-        context.strokeStyle = "1px rgba(255,255,255,0.3)";
-        context.fillText(text, newCoords[0], newCoords[1]);
-        context.strokeText(text, newCoords[0], newCoords[1]);
-        context.restore();
+        attacker.context.clearRect(0, 0, canvasSize, canvasSize);
+        drawBG(attacker.context);
+        refreshGrid(victim, attacker.context, CELLSIZE);
+        attacker.context.save();
+        attacker.context.font = (38 - (step / 5)) + "px itcMachine";
+        attacker.context.fillStyle = rgba + (1 - (step / 60)) + ")";
+        attacker.context.strokeStyle = "1px rgba(255,255,255,0.3)";
+        attacker.context.fillText(text, newCoords[0], newCoords[1]);
+        attacker.context.strokeText(text, newCoords[0], newCoords[1]);
+        attacker.context.restore();
         step += 1;
         if (step > totalSteps) {
           clearInterval(fadeOut);
-          context.clearRect(0, 0, canvasSize, canvasSize);
-          drawBG(context);
+          attacker.context.clearRect(0, 0, canvasSize, canvasSize);
+          drawBG(attacker.context);
         }
       }, 1);
     }
