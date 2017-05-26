@@ -21,6 +21,10 @@ var MISSCOLOR = "white";
 //===================================================Players CODE:
 
 
+function attackResult(isHit, coordinates) {
+  //handle here attackResult if isHit == true then your attack is successfull
+};
+
 function attack() {
   return randomTile();
 };
@@ -29,10 +33,12 @@ function randomTile() {
   return ROWS[Math.floor(Math.random() * GRIDSIZE)] + COLS[Math.floor(Math.random() * GRIDSIZE)];
 };
 
+//request bot to return ships array positions
+
 //===================================================GAME ENGINE
 
-var playerOne = new Player("Player 1", attack);
-var playerTwo = new Player("Player 2", attack);
+var playerOne = new Player("Player 1", attack, attackResult);
+var playerTwo = new Player("Player 2", attack, attackResult);
 playerOne.opponent = playerTwo;
 playerTwo.opponent = playerOne;
 var tileAttempts = 0;
@@ -40,15 +46,17 @@ var start;
 var turnCounter = null;
 
 function Player(name, attack) {
-  this.name = name;
-  this.shipArray = new ShipArray();
   this.board = new GameBoard(GRIDSIZE);
   this.hitTiles = [];
   this.missTiles = [];
   this.opponent = null;
   this.lastGuesses = [{ hit: false, tile: ""}, { hit: false, tile: ""}];
   this.nextGuesses = [];
+  
+  this.name = name;
   this.attack = attack;
+  this.attackResult = attackResult;
+  this.shipArray = new ShipArray();
 }
 
 function ShipArray() {
@@ -429,13 +437,41 @@ var addLastGuess = function(player, guess) {
   }
 }
 
+// ---------------------
+// Entry point 
+// ---------------------
+function draw() {
+  turnCounter = document.getElementById("numberOfTurns");
+  var player1Grid = document.getElementById("main-grid");
+  var player2Grid = document.getElementById("hit-miss-grid");
+  var player1Ctx = player1Grid.getContext("2d");
+  var player2Ctx = player2Grid.getContext("2d");
+  var turnCount = 0;
+  playerOne.grid = player1Grid;
+  playerOne.context = player1Ctx;
+  playerTwo.grid = player2Grid;
+  playerTwo.context = player2Ctx;
+  playerOne.messageArea = document.getElementById("message-area-one");
+  playerTwo.messageArea = document.getElementById("message-area-two");
+  newGame();
+}
+
+
 
 //=====================================____GAME____======================================================
 
 function newGame() {
   playerOne.shipArray.forEach(addRandomPosition);
   playerTwo.shipArray.forEach(addRandomPosition);
+  drawBoardFor(playerOne);
+  drawBoardFor(playerTwo);
   turnGame(playerOne, playerTwo);
+}
+
+function drawBoardFor(player) {
+  drawBG(player.context);
+  drawShips(player.shipArray, player.context);
+  drawGrid(player.context, CELLSIZE);
 }
 
 function turnGame(playerOne, playerTwo) { //while players not lost request them to new turn else game finished
@@ -443,31 +479,29 @@ function turnGame(playerOne, playerTwo) { //while players not lost request them 
     setTimeout( cpuTurn, 1000, playerOne, playerTwo);
   }
   else {
-    appendMessage(turnCounter, "And it only took " + turnCount + " turns.");
+    //appendMessage(turnCounter, "And it only took " + turnCount + " turns.");
+    drawMessage(turnCounter, "And it only took " + turnCount + " turns.");
   }
 }
 
 function cpuTurn(attacker, victim) {
-  var nextGuess = attacker.attack(); //request shot coordinates player bot (attacker) !!! 
-  let hit = attackHandler(attacker, victim, nextGuess);
-  drawBG(victim.context);
-  drawShips(victim.shipArray, victim.context);
+  var attackCoord = attacker.attack(); //request shot coordinates player bot (attacker) !!! 
+  let hit = attackHandler(attacker, victim, attackCoord);
+  attacker.attackResult(hit, attackCoord); // return to bot atackResult
+  //drawBoardFor(victim);
   refreshGrid(attacker, victim.context, CELLSIZE);
   if (hit != null) {
-    let letterCoord = characterToCoord(nextGuess.slice(0, 1));
-    let numberCoord = rowNumberToCoord(nextGuess.slice(1, nextGuess.length));
-    console.log("-------------ROW : " + letterCoord);
-    console.log("-------------COLUMN : " + numberCoord);
-    console.log("-------------guess : " + nextGuess);
-
+    let letterCoord = characterToCoord(attackCoord.slice(0, 1));
+    let numberCoord = rowNumberToCoord(attackCoord.slice(1, attackCoord.length));
     //drawBG(victim.context);
-    refreshGrid(victim, attacker.context, CELLSIZE);
-    //animateHitMissText(hit, [letterCoord, numberCoord], attacker.context, victim); 
+    //refreshGrid(victim, attacker.context, CELLSIZE);
+    //animateHitMissText(hit, [letterCoord, numberCoord], attacker.context);
     }
   if (playerLost(victim)) {
     drawMessage(attacker.messageArea, "Ah, poor " + victim.name  + ". Didn't stand a chance.");
-  }
-  else {
+  } else if (hit == true) {
+    turnGame(attacker, victim);
+  } else {
     turnGame(victim, attacker);
   }
 }
@@ -496,35 +530,48 @@ function attackHandler(attacker, victim, tile) {
   }
 };
 
-// ---------------------
-// Browser functionality
-// ---------------------
-function draw() {
-  turnCounter = document.getElementById("numberOfTurns");
-  var mainGrid = document.getElementById("main-grid");
-  var hitMissGrid = document.getElementById("hit-miss-grid");
-  var mainCtx = mainGrid.getContext("2d");
-  var hitMissCtx = hitMissGrid.getContext("2d");
-  var turnCount = 0;
-  playerOne.grid = mainGrid;
-  playerOne.context = mainCtx;
-  playerTwo.grid = hitMissGrid;
-  playerTwo.context = hitMissCtx;
-  playerOne.messageArea = document.getElementById("message-area-one");
-  playerTwo.messageArea = document.getElementById("message-area-two");
-  drawBG(mainCtx);
-  drawBG(hitMissCtx);
-  drawShips(playerOne.shipArray, mainCtx);
-  drawGrid(mainCtx, CELLSIZE);
-  drawGrid(hitMissCtx, CELLSIZE);
-  newGame();
+function drawHits(player, context) {
+  context.fillStyle = HITCOLOR;
+  drawTileArray(player.hitTiles, context);
 }
 
+function drawMisses(player, context) {
+  context.fillStyle = MISSCOLOR;
+  drawTileArray(player.missTiles, context);
+}
 
+function drawMessage(element, message) {
+  element.innerHTML = message;
+}
+
+function appendMessage(element, message) {
+  element.innerHTML = element.innerHTML + "\n" + message;
+}
+
+function refreshGrid(player, context, cellSize) {
+  drawHits(player, context);
+  drawMisses(player, context);
+  drawGrid(context, cellSize);
+}
+
+function characterToCoord(x) { // receiving a letter exmp A
+  console.log(x + "  characterToCoord");
+  return  ROWS.indexOf(x);
+}
+
+function rowNumberToCoord(y) { // receiving a number exmp 10
+  console.log(y + "   rowNumberToCoord");
+  return COLS[+y - 1];
+}
 
 //UI drawers and animations
 
-function animateHitMissText(hit, coords, context, oponent) {
+function animateHitMissText(hit, coords, context) {
+
+  console.log("Hit or Miss  ", hit);
+  console.log("Coordinates  ", coords);
+  console.log("Context ", context);
+
   var newCoords;
   if (coords[0] <= 320) {
     newCoords = [(coords[0] + 20), (coords[1] + 20)];
@@ -575,7 +622,6 @@ function animateHitMissText(hit, coords, context, oponent) {
           clearInterval(fadeOut);
           context.clearRect(0, 0, canvasSize, canvasSize);
           drawBG(context);
-          refreshGrid(oponent, context, CELLSIZE);
         }
       }, 1);
     }
@@ -613,49 +659,15 @@ function drawTileArray(array, context) {
   });
 }
 
-function drawCircleArray(array, context) {
-  var row, col;
-  array.forEach(function(tile, index, array) {
-    row = ROWS.indexOf(tile[0]);
-    col = tile.slice(1) - 1;
-    context.arc(col * CELLSIZE + (CELLSIZE/2), row * CELLSIZE + (CELLSIZE/2), CIRCLESIZE, 0, 2 * Math.PI);
-    context.fill();
-  });
-}
-
-function drawHits(player, context) {
-  context.fillStyle = HITCOLOR;
-  drawTileArray(player.hitTiles, context);
-}
-
-function drawMisses(player, context) {
-  context.fillStyle = MISSCOLOR;
-  drawTileArray(player.missTiles, context);
-}
-
-function drawMessage(element, message) {
-  element.innerHTML = message;
-}
-
-function appendMessage(element, message) {
-  element.innerHTML = element.innerHTML + "\n" + message;
-}
-
-function refreshGrid(player, context, cellSize) {
-  drawHits(player, context);
-  drawMisses(player, context);
-  drawGrid(context, cellSize);
-}
-
-function characterToCoord(x) { // receiving a letter exmp A
-  console.log(x + "  characterToCoord");
-  return  ROWS.indexOf(x);
-}
-
-function rowNumberToCoord(y) { // receiving a number exmp 10
-  console.log(y + "   rowNumberToCoord");
-  return COLS[+y - 1];
-}
+// function drawCircleArray(array, context) {
+//   var row, col;
+//   array.forEach(function(tile, index, array) {
+//     row = ROWS.indexOf(tile[0]);
+//     col = tile.slice(1) - 1;
+//     context.arc(col * CELLSIZE + (CELLSIZE/2), row * CELLSIZE + (CELLSIZE/2), CIRCLESIZE, 0, 2 * Math.PI);
+//     context.fill();
+//   });
+// }
 
 
 // function clickHandler(event) {
