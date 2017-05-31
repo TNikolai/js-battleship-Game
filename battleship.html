@@ -32,6 +32,14 @@
           inset 2px 2px 2px rgba(255,255,255,0.3);
         text-shadow: 2px 2px 2px rgba(0,0,0,0.4);
       }
+
+			.winerTitle {
+				font-size: 3em;
+				margin-left: 100px;
+    		margin-right: 100px;
+				color:aqua;
+			}
+
       .container {
         float: left;
         display: inline-block;
@@ -50,14 +58,14 @@
   </head>
   <body>
     <h1>JS Battleship</h1>
-    <h2 id="numberOfTurns">Turn counter will be here !</h2>
+		<h2 class="winerTitle" id="number-of-turns"></h2>
     <div class="container">
-      <h2>Player 1 Ships</h2>
+      <h2 id="first-player-name"></h2>
       <canvas id="main-grid" height="400" width="400"></canvas>
       <div id="message-area-one"></div>
     </div>
     <div class="container">
-      <h2>Player 2 Ships</h2>
+      <h2 id="second-player-name"></h2>
       <canvas id="hit-miss-grid" height="400" width="400"></canvas>
       <div id="message-area-two"></div>
     </div>
