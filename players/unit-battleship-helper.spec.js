@@ -17,7 +17,7 @@ describe(' addRandomPossition ForShips helper func', () => {
 		});
 
 		it('Placed ship cannot intersects with other ships', () => {
-			for (var i = 0; i < 500; i++) {
+			for (var i = 0; i < 10; i++) {
 				var ships = SHIPS.slice();
 				ships.forEach(addRandomPosition);
 				ships.forEach((ship, index, shipArray) => {
@@ -28,7 +28,7 @@ describe(' addRandomPossition ForShips helper func', () => {
 		});
 
 			it('Cant place ship adjacent to other ships', () => {
-			for (var i = 0; i < 500; i++) {
+			for (var i = 0; i < 10; i++) {
 				var ships = SHIPS.slice();
 				ships.forEach(addRandomPosition);
 				ships.forEach((ship, index, shipArray) => {

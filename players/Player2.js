@@ -24,7 +24,7 @@ function getName() {
  * @param {String} coordinates Previos attacked coordinates.
  * @return {void}
  */
-function attackResult(isHit, coordinates) {
+function attackResult(isHit) {
 
 };
 

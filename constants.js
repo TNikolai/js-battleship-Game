@@ -1,18 +1,18 @@
-const SHIPS = [{ shipType: "Aircraft Carrier", health: 5, tilesOccupied: [] },
-		  				 { shipType: "Battleship", health: 4, tilesOccupied: [] },
+// const SHIPS = [{ shipType: "Aircraft Carrier", health: 5, tilesOccupied: [] },
+// 		  				 { shipType: "Battleship", health: 4, tilesOccupied: [] },
+// 			  			 { shipType: "Submarine", health: 3, tilesOccupied: [] },
+// 				  		 { shipType: "Patrol Boat", health: 2, tilesOccupied: [] } ];
+const SHIPS = [{ shipType: "Battleship", health: 4, tilesOccupied: [] },
 			  			 { shipType: "Submarine", health: 3, tilesOccupied: [] },
-				  		 { shipType: "Patrol Boat", health: 2, tilesOccupied: [] } ];
-// const SHIPS = [{ shipType: "Battleship", health: 4, tilesOccupied: [] },
-// 			  			 { shipType: "Submarine", health: 3, tilesOccupied: [] },
-// 			  			 { shipType: "Submarine", health: 3, tilesOccupied: [] },
-// 				  		 { shipType: "Patrol Boat", health: 2, tilesOccupied: [] },
-// 				  		 { shipType: "Patrol Boat", health: 2, tilesOccupied: [] },
-// 				  		 { shipType: "Patrol Boat", health: 2, tilesOccupied: [] },
-// 							 { shipType: "Cruiser", health: 1, tilesOccupied: [] },
-// 							 { shipType: "Cruiser", health: 1, tilesOccupied: [] },
-// 							 { shipType: "Cruiser", health: 1, tilesOccupied: [] },
-// 							 { shipType: "Cruiser", health: 1, tilesOccupied: [] }
-// 						  ];
+			  			 { shipType: "Submarine", health: 3, tilesOccupied: [] },
+				  		 { shipType: "Patrol Boat", health: 2, tilesOccupied: [] },
+				  		 { shipType: "Patrol Boat", health: 2, tilesOccupied: [] },
+				  		 { shipType: "Patrol Boat", health: 2, tilesOccupied: [] },
+							 { shipType: "Cruiser", health: 1, tilesOccupied: [] },
+							 { shipType: "Cruiser", health: 1, tilesOccupied: [] },
+							 { shipType: "Cruiser", health: 1, tilesOccupied: [] },
+							 { shipType: "Cruiser", health: 1, tilesOccupied: [] }
+						  ];
 
 var ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
 var COLS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];

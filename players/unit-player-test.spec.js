@@ -30,7 +30,7 @@ for (let teamPlayer of [TeamPlayer1, TeamPlayer2]) {
 		it('attack() function should return coordinates as String e.g: A10, B7, I7', () => {
 			for (let i = 0; i < 1000; i++) {
 				let attackCoordinates = attack();
-				expect(attackCoordinates).not.equal('');
+				expect(attackCoordinates).to.be.an('string').that.is.not.empty;
 				assert.isAbove(attackCoordinates.length, 1, "Coordinates length need be greather than one char");
 				assert.isBelow(attackCoordinates.length, 4, "Coordinates length need be below than 4 chars exmp:  2 > A10 < 4");
 			}

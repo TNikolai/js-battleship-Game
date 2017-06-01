@@ -264,6 +264,9 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 var playerOne = new Player(TeamPlayer1);
 var playerTwo = new Player(TeamPlayer2);
 var turnCounter = null;
+var explodeImg = new Image();
+explodeImg.src = "explode.jpeg";
+explodeImg.onload;
 
 function Player(teamPlayer) {
   this.hitTiles = [];
@@ -345,7 +348,6 @@ function checkForShip(player, tile) {
       foundShip = ship;
     }
   });
-  console.log(foundShip);
   return foundShip;
 };
 
@@ -372,7 +374,6 @@ function playerLost(player) {
 }
 
 function guessCheck(player, guess) {
-  console.log("Checking guess: " + guess);
   return player.missTiles.indexOf(guess) == -1 && player.hitTiles.indexOf(guess) == -1; //true if guess was not used before
 }
 
@@ -421,18 +422,17 @@ function turnGame(playerOne, playerTwo) {
   //while players not lost request them to new turn else game finished
   if (playerLost(playerOne) == false && playerLost(playerTwo) == false) {
     playerOne.turnCount++;
-    setTimeout(cpuTurn, 10, playerOne, playerTwo);
+    setTimeout(cpuTurn, 1, playerOne, playerTwo);
   }
 }
 
 function cpuTurn(attacker, victim) {
   var attackCoord = attacker.attack(); //request shot coordinates player bot (attacker) !!!
   var attackResult = attackHandler(attacker, victim, attackCoord);
-  attacker.attackResult(attackResult, attackCoord); // return to bot atackResult  may be need here new thread
+  attacker.attackResult(attackResult); // return to bot atackResult  may be need here new thread
   refreshGrid(attacker, victim.context, _constants.CELLSIZE);
   if (attackResult != _constants.DUPLICATED) {
-    var coordinates = (0, _battleshipHelper.tileToCoordinates)(attackCoord);
-    animateHitMissText(attackResult, coordinates, victim, attacker);
+    animateHitMissText(attackResult, attackCoord, victim, attacker);
   }
   if (playerLost(victim)) {
     drawMessage(attacker.messageArea, "Ah, poor " + victim.name + ". Didn't stand a chance.");
@@ -496,16 +496,6 @@ function appendMessage(element, message) {
   element.innerHTML = element.innerHTML + "\n" + message;
 }
 
-function characterToCoord(x) {
-  // receiving a letter exmp A
-  return _constants.ROWS.indexOf(x);
-}
-
-function rowNumberToCoord(y) {
-  // receiving a number exmp 10
-  return _constants.COLS[+y - 1];
-}
-
 function drawGrid(context, cellSize) {
   for (var x = 0; x < _constants.GRIDSIZE; x++) {
     for (var y = 0; y < _constants.GRIDSIZE; y++) {
@@ -539,7 +529,8 @@ function drawTileArray(array, context) {
 
 //UI drawers and animations
 
-function animateHitMissText(hit, coords, attacker, victim) {
+function animateHitMissText(hit, attackCoord, attacker, victim) {
+  var coords = (0, _battleshipHelper.tileToCoordinates)(attackCoord);
   var newCoords;
   if (coords[0] <= 320) {
     newCoords = [coords[0] + 20, coords[1] + 20];
@@ -557,13 +548,15 @@ function animateHitMissText(hit, coords, attacker, victim) {
     rgba = "rgba(0,130,23,1)";
   }
   var fadeIn = setInterval(function () {
-    animateText({ text: text, attacker: attacker, victim: victim, newCoords: newCoords, rgba: rgba, step: step, canvasSize: canvasSize });
+    // animateText({text, attacker, victim, newCoords, rgba, step, canvasSize});
+    animateAttack(attacker, attackCoord);
     step += 1;
     if (step > totalSteps / 2) {
       clearInterval(fadeIn);
       step = 0;
       var fadeOut = setInterval(function () {
-        animateText({ text: text, attacker: attacker, victim: victim, newCoords: newCoords, rgba: rgba, step: step, canvasSize: canvasSize });
+        // animateText({text, attacker, victim, newCoords, rgba, step, canvasSize});
+        animateAttack(attacker, attackCoord);
         step += 1;
         if (step > totalSteps) {
           clearInterval(fadeOut);
@@ -574,6 +567,15 @@ function animateHitMissText(hit, coords, attacker, victim) {
       }, 1);
     }
   }, 1);
+}
+
+function animateAttack(attacker, tile) {
+  var context = attacker.context;
+  var pattern1 = context.createPattern(explodeImg, 'repeat');
+  context.fillStyle = pattern1;
+  var row = _constants.ROWS.indexOf(tile[0]);
+  var col = tile.slice(1) - 1;
+  context.fillRect(col * _constants.CELLSIZE, row * _constants.CELLSIZE, _constants.CELLSIZE, _constants.CELLSIZE);
 }
 
 function animateText(drawPrimiteves) {
@@ -597,45 +599,17 @@ function animateText(drawPrimiteves) {
   attacker.context.restore();
 }
 
-// function clickHandler(event) {
-//   console.log(event);
-//   var coords = getPosition(event);
-//   var column = coordToColumn(coords[0]);
-//   var row = coordToRow(coords[1]);
-//   var tile = row + column;
-//   var hit = attack(playerOne, playerTwo, tile);
-//   if (hit != null) {
-//     drawBG(playerTwo.context);
-//     refreshGrid(playerOne, playerTwo.context, CELLSIZE);
-//     animateHitMissText(hit, coords, playerTwo.context);
-//     event.srcElement.removeEventListener("mousedown", clickHandler, false);
-//     if (playerLost(playerTwo)) {
-//       drawMessage(playerTwo.messageArea, "Shucks, I lost to the puny human.");
-//     }
-//     else {
-//       cpuTurn(playerTwo, playerOne);
-//     }
-//   }
-// }
-
 },{"./battleship-helper":1,"./constants":3,"./players/Player":4,"./players/Player2":5}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+	value: true
 });
-var SHIPS = [{ shipType: "Aircraft Carrier", health: 5, tilesOccupied: [] }, { shipType: "Battleship", health: 4, tilesOccupied: [] }, { shipType: "Submarine", health: 3, tilesOccupied: [] }, { shipType: "Patrol Boat", health: 2, tilesOccupied: [] }];
-// const SHIPS = [{ shipType: "Battleship", health: 4, tilesOccupied: [] },
+// const SHIPS = [{ shipType: "Aircraft Carrier", health: 5, tilesOccupied: [] },
+// 		  				 { shipType: "Battleship", health: 4, tilesOccupied: [] },
 // 			  			 { shipType: "Submarine", health: 3, tilesOccupied: [] },
-// 			  			 { shipType: "Submarine", health: 3, tilesOccupied: [] },
-// 				  		 { shipType: "Patrol Boat", health: 2, tilesOccupied: [] },
-// 				  		 { shipType: "Patrol Boat", health: 2, tilesOccupied: [] },
-// 				  		 { shipType: "Patrol Boat", health: 2, tilesOccupied: [] },
-// 							 { shipType: "Cruiser", health: 1, tilesOccupied: [] },
-// 							 { shipType: "Cruiser", health: 1, tilesOccupied: [] },
-// 							 { shipType: "Cruiser", health: 1, tilesOccupied: [] },
-// 							 { shipType: "Cruiser", health: 1, tilesOccupied: [] }
-// 						  ];
+// 				  		 { shipType: "Patrol Boat", health: 2, tilesOccupied: [] } ];
+var SHIPS = [{ shipType: "Battleship", health: 4, tilesOccupied: [] }, { shipType: "Submarine", health: 3, tilesOccupied: [] }, { shipType: "Submarine", health: 3, tilesOccupied: [] }, { shipType: "Patrol Boat", health: 2, tilesOccupied: [] }, { shipType: "Patrol Boat", health: 2, tilesOccupied: [] }, { shipType: "Patrol Boat", health: 2, tilesOccupied: [] }, { shipType: "Cruiser", health: 1, tilesOccupied: [] }, { shipType: "Cruiser", health: 1, tilesOccupied: [] }, { shipType: "Cruiser", health: 1, tilesOccupied: [] }, { shipType: "Cruiser", health: 1, tilesOccupied: [] }];
 
 var ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
 var COLS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
@@ -654,7 +628,7 @@ var SUNK = 'SUNK';
 var DUPLICATED = 'DUPLICATED';
 
 function shipsCopy() {
-  return JSON.parse(JSON.stringify(SHIPS));
+	return JSON.parse(JSON.stringify(SHIPS));
 }
 
 exports.SHIPS = SHIPS;
@@ -697,124 +671,14 @@ function getName() {
   return "Hero";
 };
 
-function attackResult(isHit, coordinates) {
+function attackResult(isHit) {
   //handle here attackResult if isHit == true then your attack was successfull.
   //coordinates is previos attacked coordinates.
-  if (isHit) {
-    addLastGuess(bot, { hit: true, tile: coordinates });
-    bot.hitTiles.push(coordinates);
-  } else {
-    addLastGuess(bot, { hit: false, tile: coordinates });
-    bot.missTiles.push(coordinates);
-  }
 };
 
 function attack() {
-  var nextGuess = cpuTilePick(bot);
   return (0, _battleshipHelper.randomTile)();
 };
-
-// Player attack funtionality -----------------------------------
-
-function guessesAfterHit(cpu, tile) {
-  var guesses = [];
-  var newTile;
-  if (tile && tile[0] != _constants.ROWS[0]) {
-    guesses.push((0, _battleshipHelper.nextRowDown)(tile[0]) + tile.slice(1));
-  }
-  if (tile && tile[1] != _constants.COLS[0]) {
-    guesses.push(tile[0] + (0, _battleshipHelper.nextColDown)(tile.slice(1)));
-  }
-  if (tile && tile[0] != _constants.ROWS[_constants.GRIDSIZE - 1]) {
-    guesses.push((0, _battleshipHelper.nextRowUp)(tile[0]) + tile.slice(1));
-  }
-  if (tile && tile[1] != _constants.COLS[_constants.GRIDSIZE - 1]) {
-    guesses.push(tile[0] + (0, _battleshipHelper.nextColUp)(tile.slice(1)));
-  }
-  return guesses;
-}
-
-function guessCheck(player, guess) {
-  console.log("Checking guess: " + guess);
-  return player.missTiles.indexOf(guess) == -1 && player.hitTiles.indexOf(guess) == -1;
-}
-
-var extrapolateMovement = function extrapolateMovement(tile1, tile2) {
-  var rowDiff = _constants.ROWS.indexOf(tile2[0]) - _constants.ROWS.indexOf(tile1[0]);
-  var colDiff = tile2.slice(1) - tile1.slice(1);
-  console.log("Extropolate" + tile1 + tile2);
-  console.log(_constants.ROWS[_constants.ROWS.indexOf(tile2[0]) + rowDiff]);
-  return _constants.ROWS[_constants.ROWS.indexOf(tile2[0]) + rowDiff] + (parseInt(tile2.slice(1)) + colDiff);
-};
-
-var addLastGuess = function addLastGuess(player, guess) {
-  if (player.lastGuesses.unshift(guess) > 5) {
-    player.lastGuesses.pop();
-  }
-};
-
-function removeTile(ship, tile) {
-  var index = ship.tilesOccupied.indexOf(tile);
-  return ship.tilesOccupied.splice(index, 1).join("");
-}
-
-function cpuTilePick(cpu) {
-  var startTile, nextTile, newGuess;
-  var guessCount = 0;
-  if (cpu.lastGuesses[0].hit && !cpu.lastGuesses[0].sunk) {
-    startTile = cpu.lastGuesses[0].tile;
-    if (cpu.lastGuesses[1].hit) {
-      newGuess = extrapolateMovement(cpu.lastGuesses[1].tile, cpu.lastGuesses[0].tile);
-      if (guessCheck(cpu, newGuess)) {
-        nextTile = newGuess;
-        cpu.nextGuesses = cpu.nextGuesses.concat(guessesAfterHit(cpu, nextTile));
-      } else {
-        cpu.nextGuesses = cpu.nextGuesses.concat(guessesAfterHit(cpu, startTile));
-      }
-    } else {
-      cpu.nextGuesses = guessesAfterHit(cpu, startTile);
-    }
-    while (cpu.nextGuesses.length > 0 && nextTile == undefined) {
-      console.log("while (cpu.nextGuesses.length > 0 && nextTile == undefined)");
-      newGuess = cpu.nextGuesses.shift();
-      if (guessCheck(cpu, newGuess)) {
-        nextTile = newGuess;
-      }
-    }
-  } else if (!cpu.lastGuesses[0].sunk) {
-    while (cpu.nextGuesses.length > 0 && nextTile == undefined) {
-      console.log("while (cpu.nextGuesses.length > 0 && nextTile == undefined) {");
-      newGuess = cpu.nextGuesses.shift();
-      if (guessCheck(cpu, newGuess)) {
-        nextTile = newGuess;
-      }
-    }
-  }
-  if (nextTile == undefined) {
-    nextTile = (0, _battleshipHelper.randomTile)();
-    while (guessCheck(cpu, nextTile) == false || detectAdjacentMisses(cpu.missTiles, nextTile)) {
-      console.log("while (guessCheck(cpu, nextTile) == false || detectAdjacentMisses(cpu.missTiles, nextTile)) {");
-      nextTile = (0, _battleshipHelper.randomTile)();
-      guessCount += 1;
-      if (guessCheck(cpu, nextTile) && guessCount > 50) {
-        break;
-      }
-    }
-  }
-  return nextTile;
-}
-
-function detectAdjacentMisses(misses, startTile) {
-  var adjacent = (0, _battleshipHelper.buildAdjacencyArray)(startTile);
-  var match = false;
-  adjacent.forEach(function (tileObj, index, array) {
-    if (misses.indexOf(tileObj.tile) != -1) {
-      match = true;
-      return;
-    }
-  });
-  return match;
-}
 
 exports.getName = getName;
 exports.attack = attack;
@@ -845,7 +709,7 @@ function getName() {
  * @param {String} coordinates Previos attacked coordinates.
  * @return {void}
  */
-function attackResult(isHit, coordinates) {};
+function attackResult(isHit) {};
 
 /**
  * Returns coordinates in which player want attack

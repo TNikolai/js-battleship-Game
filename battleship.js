@@ -29,6 +29,9 @@ import * as TeamPlayer2 from './players/Player2';
 var playerOne = new Player(TeamPlayer1);
 var playerTwo = new Player(TeamPlayer2);
 var turnCounter = null;
+var explodeImg=new Image();
+explodeImg.src="explode.jpeg";
+explodeImg.onload;
 
 function Player(teamPlayer) {
   this.hitTiles = [];
@@ -113,7 +116,6 @@ function checkForShip(player, tile) {
       foundShip = ship;
     }
   });
-  console.log(foundShip);
   return foundShip;
 };
 
@@ -140,7 +142,6 @@ function playerLost(player) {
 }
 
 function guessCheck(player, guess) {
-  console.log("Checking guess: " + guess);
   return (player.missTiles.indexOf(guess) == -1 && player.hitTiles.indexOf(guess) == -1); //true if guess was not used before
 }
 
@@ -188,18 +189,17 @@ function newGame() {
 function turnGame(playerOne, playerTwo) { //while players not lost request them to new turn else game finished
   if (playerLost(playerOne) == false && playerLost(playerTwo) == false) {
 		playerOne.turnCount++;
-    setTimeout( cpuTurn, 10, playerOne, playerTwo);
+    setTimeout( cpuTurn, 1, playerOne, playerTwo);
   }
 }
 
 function cpuTurn(attacker, victim) {
   var attackCoord = attacker.attack(); //request shot coordinates player bot (attacker) !!!
   let attackResult = attackHandler(attacker, victim, attackCoord);
-  attacker.attackResult(attackResult, attackCoord); // return to bot atackResult  may be need here new thread
+  attacker.attackResult(attackResult); // return to bot atackResult  may be need here new thread
   refreshGrid(attacker, victim.context, CELLSIZE);
   if (attackResult != DUPLICATED) {
-    let coordinates = tileToCoordinates(attackCoord);
-    animateHitMissText(attackResult, coordinates, victim, attacker);
+    animateHitMissText(attackResult, attackCoord, victim, attacker);
     }
   if (playerLost(victim)) {
     drawMessage(attacker.messageArea, "Ah, poor " + victim.name  + ". Didn't stand a chance.");
@@ -265,14 +265,6 @@ function appendMessage(element, message) {
   element.innerHTML = element.innerHTML + "\n" + message;
 }
 
-function characterToCoord(x) { // receiving a letter exmp A
-  return  ROWS.indexOf(x);
-}
-
-function rowNumberToCoord(y) { // receiving a number exmp 10
-  return COLS[+y - 1];
-}
-
 function drawGrid(context, cellSize) {
   for (var x=0; x < GRIDSIZE; x++) {
     for (var y=0; y < GRIDSIZE; y++) {
@@ -306,7 +298,8 @@ function drawTileArray(array, context) {
 
 //UI drawers and animations
 
-function animateHitMissText(hit, coords, attacker, victim) {
+function animateHitMissText(hit, attackCoord, attacker, victim) {
+  let coords = tileToCoordinates(attackCoord);
   var newCoords;
   if (coords[0] <= 320) {
     newCoords = [(coords[0] + 20), (coords[1] + 20)];
@@ -326,13 +319,15 @@ function animateHitMissText(hit, coords, attacker, victim) {
     rgba = "rgba(0,130,23,1)";
   }
   var fadeIn = setInterval(function() {
-   animateText({text, attacker, victim, newCoords, rgba, step, canvasSize});
+  // animateText({text, attacker, victim, newCoords, rgba, step, canvasSize});
+  animateAttack(attacker, attackCoord);
     step += 1;
     if (step > (totalSteps / 2)) {
       clearInterval(fadeIn);
       step = 0;
       var fadeOut = setInterval(function() {
-       animateText({text, attacker, victim, newCoords, rgba, step, canvasSize});
+        // animateText({text, attacker, victim, newCoords, rgba, step, canvasSize});
+        animateAttack(attacker, attackCoord);
         step += 1;
         if (step > totalSteps) {
           clearInterval(fadeOut);
@@ -345,9 +340,18 @@ function animateHitMissText(hit, coords, attacker, victim) {
   }, 1);
 }
 
+function animateAttack(attacker, tile) {
+  var context = attacker.context;
+  var pattern1=context.createPattern(explodeImg,'repeat');
+  context.fillStyle = pattern1;
+  var row = ROWS.indexOf(tile[0]);
+  var col = tile.slice(1) - 1;
+  context.fillRect(col * CELLSIZE, row * CELLSIZE, CELLSIZE, CELLSIZE);
+}
+
 function animateText(drawPrimiteves) {
-   var {text, attacker, victim, newCoords, rgba, step, canvasSize} = drawPrimiteves;
-   attacker.context.clearRect(0, 0, canvasSize, canvasSize);
+    var {text, attacker, victim, newCoords, rgba, step, canvasSize} = drawPrimiteves;
+    attacker.context.clearRect(0, 0, canvasSize, canvasSize);
     drawBoardFor(attacker);
     refreshGrid(victim, attacker.context, CELLSIZE);
     attacker.context.save();
@@ -358,25 +362,4 @@ function animateText(drawPrimiteves) {
     attacker.context.strokeText(text, newCoords[0], newCoords[1]);
     attacker.context.restore();
 }
-
-// function clickHandler(event) {
-//   console.log(event);
-//   var coords = getPosition(event);
-//   var column = coordToColumn(coords[0]);
-//   var row = coordToRow(coords[1]);
-//   var tile = row + column;
-//   var hit = attack(playerOne, playerTwo, tile);
-//   if (hit != null) {
-//     drawBG(playerTwo.context);
-//     refreshGrid(playerOne, playerTwo.context, CELLSIZE);
-//     animateHitMissText(hit, coords, playerTwo.context);
-//     event.srcElement.removeEventListener("mousedown", clickHandler, false);
-//     if (playerLost(playerTwo)) {
-//       drawMessage(playerTwo.messageArea, "Shucks, I lost to the puny human.");
-//     }
-//     else {
-//       cpuTurn(playerTwo, playerOne);
-//     }
-//   }
-// }
 
