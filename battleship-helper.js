@@ -218,9 +218,19 @@ function addRandomPosition(ship, index, ships) {
   }
 }
 
+function tileToCoordinates(tile) {
+  var rowIndex = ROWS.indexOf(tile[0]);
+  var colIndex = tile.slice(1);
+  let x = 400 * colIndex / 10;
+  let y = 400 * rowIndex / 10;
+
+  return [x, y];
+}
+
 
 export {
 		addRandomPosition,
+    tileToCoordinates,
     checkShipsForTile,
     getStartingHealth,
     detectAdjacentShips,

@@ -4,7 +4,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.oppositeDirection = exports.nextColDown = exports.nextColUp = exports.nextRowUp = exports.nextRowDown = exports.buildAdjacencyArray = exports.getOrientation = exports.randomTile = exports.detectAdjacentShips = exports.getStartingHealth = exports.checkShipsForTile = exports.addRandomPosition = undefined;
+exports.oppositeDirection = exports.nextColDown = exports.nextColUp = exports.nextRowUp = exports.nextRowDown = exports.buildAdjacencyArray = exports.getOrientation = exports.randomTile = exports.detectAdjacentShips = exports.getStartingHealth = exports.checkShipsForTile = exports.tileToCoordinates = exports.addRandomPosition = undefined;
 
 var _constants = require("./constants");
 
@@ -221,7 +221,17 @@ function addRandomPosition(ship, index, ships) {
   }
 }
 
+function tileToCoordinates(tile) {
+  var rowIndex = _constants.ROWS.indexOf(tile[0]);
+  var colIndex = tile.slice(1);
+  var x = 400 * colIndex / 10;
+  var y = 400 * rowIndex / 10;
+
+  return [x, y];
+}
+
 exports.addRandomPosition = addRandomPosition;
+exports.tileToCoordinates = tileToCoordinates;
 exports.checkShipsForTile = checkShipsForTile;
 exports.getStartingHealth = getStartingHealth;
 exports.detectAdjacentShips = detectAdjacentShips;
@@ -411,7 +421,7 @@ function turnGame(playerOne, playerTwo) {
   //while players not lost request them to new turn else game finished
   if (playerLost(playerOne) == false && playerLost(playerTwo) == false) {
     playerOne.turnCount++;
-    setTimeout(cpuTurn, 1000, playerOne, playerTwo);
+    setTimeout(cpuTurn, 10, playerOne, playerTwo);
   }
 }
 
@@ -421,13 +431,12 @@ function cpuTurn(attacker, victim) {
   attacker.attackResult(attackResult, attackCoord); // return to bot atackResult  may be need here new thread
   refreshGrid(attacker, victim.context, _constants.CELLSIZE);
   if (attackResult != _constants.DUPLICATED) {
-    var letterCoord = characterToCoord(attackCoord.slice(0, 1));
-    var numberCoord = rowNumberToCoord(attackCoord.slice(1, attackCoord.length));
-    //animateHitMissText(attackResult, [letterCoord, numberCoord], attacker, victim);
+    var coordinates = (0, _battleshipHelper.tileToCoordinates)(attackCoord);
+    animateHitMissText(attackResult, coordinates, victim, attacker);
   }
   if (playerLost(victim)) {
     drawMessage(attacker.messageArea, "Ah, poor " + victim.name + ". Didn't stand a chance.");
-    drawMessage(turnCounter, "  Congratulations to " + attacker.name + " !!! He won in " + attacker.turnCount + " turns.");
+    drawMessage(turnCounter, "Congratulations to " + attacker.name + " !!! They won in " + attacker.turnCount + " turns.");
   } else if (attackResult == _constants.HIT || attackResult == _constants.SUNK) {
     turnGame(attacker, victim);
   } else {
@@ -548,40 +557,44 @@ function animateHitMissText(hit, coords, attacker, victim) {
     rgba = "rgba(0,130,23,1)";
   }
   var fadeIn = setInterval(function () {
-    attacker.context.clearRect(0, 0, canvasSize, canvasSize);
-    drawBoardFor(attacker);
-    refreshGrid(victim, attacker.context, _constants.CELLSIZE);
-    attacker.context.save();
-    attacker.context.font = "38px itcMachine";
-    attacker.context.fillStyle = rgba + step / 30 + ")";
-    attacker.context.strokeStyle = "1px rgba(255,255,255,0.3)";
-    attacker.context.fillText(text, newCoords[0], newCoords[1]);
-    attacker.context.strokeText(text, newCoords[0], newCoords[1]);
-    attacker.context.restore();
+    animateText({ text: text, attacker: attacker, victim: victim, newCoords: newCoords, rgba: rgba, step: step, canvasSize: canvasSize });
     step += 1;
     if (step > totalSteps / 2) {
       clearInterval(fadeIn);
       step = 0;
       var fadeOut = setInterval(function () {
-        attacker.context.clearRect(0, 0, canvasSize, canvasSize);
-        drawBoardFor(attacker);
-        refreshGrid(victim, attacker.context, _constants.CELLSIZE);
-        attacker.context.save();
-        attacker.context.font = 38 - step / 5 + "px itcMachine";
-        attacker.context.fillStyle = rgba + (1 - step / 60) + ")";
-        attacker.context.strokeStyle = "1px rgba(255,255,255,0.3)";
-        attacker.context.fillText(text, newCoords[0], newCoords[1]);
-        attacker.context.strokeText(text, newCoords[0], newCoords[1]);
-        attacker.context.restore();
+        animateText({ text: text, attacker: attacker, victim: victim, newCoords: newCoords, rgba: rgba, step: step, canvasSize: canvasSize });
         step += 1;
         if (step > totalSteps) {
           clearInterval(fadeOut);
           attacker.context.clearRect(0, 0, canvasSize, canvasSize);
           drawBoardFor(attacker);
+          refreshGrid(victim, attacker.context, _constants.CELLSIZE);
         }
       }, 1);
     }
   }, 1);
+}
+
+function animateText(drawPrimiteves) {
+  var text = drawPrimiteves.text,
+      attacker = drawPrimiteves.attacker,
+      victim = drawPrimiteves.victim,
+      newCoords = drawPrimiteves.newCoords,
+      rgba = drawPrimiteves.rgba,
+      step = drawPrimiteves.step,
+      canvasSize = drawPrimiteves.canvasSize;
+
+  attacker.context.clearRect(0, 0, canvasSize, canvasSize);
+  drawBoardFor(attacker);
+  refreshGrid(victim, attacker.context, _constants.CELLSIZE);
+  attacker.context.save();
+  attacker.context.font = "38px itcMachine";
+  attacker.context.fillStyle = rgba + step / 30 + ")";
+  attacker.context.strokeStyle = "1px rgba(255,255,255,0.3)";
+  attacker.context.fillText(text, newCoords[0], newCoords[1]);
+  attacker.context.strokeText(text, newCoords[0], newCoords[1]);
+  attacker.context.restore();
 }
 
 // function clickHandler(event) {
