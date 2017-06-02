@@ -1,10 +1,12 @@
 import { expect, assert } from 'chai';
 import { SHIPS } from '../constants';
 import {buildAdjacencyArray} from '../battleship-helper';
-import * as TeamPlayer1 from './Player';
+import * as TeamPlayer1 from './Player1';
 import * as TeamPlayer2 from './Player2';
+import * as TeamPlayer3 from './Player3';
+import * as TeamPlayer4 from './Player4';
 
-for (let teamPlayer of [TeamPlayer1, TeamPlayer2]) {
+for (let teamPlayer of [TeamPlayer1, TeamPlayer2, TeamPlayer3, TeamPlayer4]) {
 
 	describe('Testing players required functions', () => {
 		let getName = teamPlayer.getName;

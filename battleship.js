@@ -22,8 +22,10 @@ import {checkShipsForTile,
 			  buildAdjacencyArray,
 			  addRandomPosition} from './battleship-helper';
 
-import * as TeamPlayer1 from './players/Player';
+import * as TeamPlayer1 from './players/Player1';
 import * as TeamPlayer2 from './players/Player2';
+import * as TeamPlayer2 from './players/Player3';
+import * as TeamPlayer2 from './players/Player4'; 
 
 
 var playerOne = new Player(TeamPlayer1);
@@ -189,7 +191,7 @@ function newGame() {
 function turnGame(playerOne, playerTwo) { //while players not lost request them to new turn else game finished
   if (playerLost(playerOne) == false && playerLost(playerTwo) == false) {
 		playerOne.turnCount++;
-    setTimeout( cpuTurn, 1, playerOne, playerTwo);
+    setTimeout( cpuTurn, 800, playerOne, playerTwo);
   }
 }
 

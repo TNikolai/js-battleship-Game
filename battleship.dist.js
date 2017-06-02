@@ -422,7 +422,7 @@ function turnGame(playerOne, playerTwo) {
   //while players not lost request them to new turn else game finished
   if (playerLost(playerOne) == false && playerLost(playerTwo) == false) {
     playerOne.turnCount++;
-    setTimeout(cpuTurn, 1, playerOne, playerTwo);
+    setTimeout(cpuTurn, 800, playerOne, playerTwo);
   }
 }
 
@@ -668,7 +668,7 @@ var bot = {
 };
 
 function getName() {
-  return "Hero";
+  return "TeamPlayer1";
 };
 
 function attackResult(isHit) {
