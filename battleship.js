@@ -24,8 +24,8 @@ import {checkShipsForTile,
 
 import * as TeamPlayer1 from './players/Player1';
 import * as TeamPlayer2 from './players/Player2';
-import * as TeamPlayer2 from './players/Player3';
-import * as TeamPlayer2 from './players/Player4'; 
+import * as TeamPlayer3 from './players/Player3';
+import * as TeamPlayer4 from './players/Player4'; 
 
 
 var playerOne = new Player(TeamPlayer1);
