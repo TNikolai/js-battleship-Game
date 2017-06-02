@@ -1,30 +1,10 @@
-const ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
-const COLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-const BOARD = new Map()
-  .set("A", [...(new Array(10))])
-  .set("B", [...(new Array(10))])
-  .set("C", [...(new Array(10))])
-  .set("D", [...(new Array(10))])
-  .set("E", [...(new Array(10))])
-  .set("F", [...(new Array(10))])
-  .set("G", [...(new Array(10))])
-  .set("H", [...(new Array(10))])
-  .set("I", [...(new Array(10))])
-  .set("J", [...(new Array(10))])
-let shot;
-
 /**
  * Returns string name for team.
  * @return {string} for example: 'Navi'
  */
 function getName() {
-	return "Davide";
+	return "Killers";
 };
-
-const MISS = "MISS";
-const HIT = "HIT";
-const SUNK = "SUNK";
-const DUPLICATED = "DUPLICATED";
 
 /**
  * MISS -> missed attack
@@ -35,37 +15,46 @@ const DUPLICATED = "DUPLICATED";
  * @return {void}
  */
 function attackResult(result) {
-  markCell(shot, result);
-  if (result === SUNK) {
-    markSunk(shot);
-  }
-};
+  const [x, y] = currentAttack;
+  empty = empty.filter((i) => !(i[0] == x && i[1] == y));
+  switch (result) {
+    case 'MISS':
+      field[x][y] = cellType.miss;
+    break;
+    case 'HIT':
+      field[x][y] = cellType.hit;
+    break;
+    case 'SUNK':
+      field[x][y] = cellType.hit;
+      sunk(x, y);
 
-function markSunk(shot) {
-  const [row, col] = shot;
-  const rowIdx = ROWS.findIndex((r) => r === row);
-  let newRowIdx;
-  let newColIdx;
-  const offsets = [[-1, 0], [-1, -1], [-1, 1], [0, 1], [0, -1], [1, -1], [1, 0], [1, 1]];
-  for (let offset of offsets) {
-    newRowIdx = rowIdx + offset[0];
-    newColIdx = col + offset[1];
-    if (newRowIdx >= 0 && newRowIdx <= 9 && newColIdx >= 1 && newColIdx <= 10) {
-      if (cellStatus([ROWS[newRowIdx], newColIdx]) === HIT) {
-        markSunk([ROWS[newRowIdx], newColIdx]);
+      // here u need mark all adjacent tiles with attacked 
+    break;
+    default:
+      
+  }
+  
+};
+function sunk(x, y) {
+  field[x][y] = cellType.sunk;
+  for (let i = -1; i < 2; i++) {
+    for (let j = -1; j < 2; j++) {
+      if (!field[x + i] || field[x + i] && !field[x +i][y + j]) continue;
+      if (i == 0 && j == 0) continue;
+      if (field[x + i][y + j] == cellType.hit) {
+        //   console.log('killer x y dx dy  ',x, y, x + i, y +j)
+        //   debugger;
+          
+          sunk(x + i, y + j)
+
       }
-      markCell([ROWS[newRowIdx], newColIdx], MISS);
+      field[x + i][y + j] = cellType.miss;
+      empty;
+      debugger;
+      empty = empty.filter((item) => !(item[0] == x + i && item[1] == y + j));
+      debugger;
     }
   }
-}
-
-function markCell([row, col], tag) {
-  let item = BOARD.get(row);
-  item[col-1] = tag;
-}
-
-function cellStatus([row, cell]) {
-  return BOARD.get(row)[cell - 1];
 }
 
 /**
@@ -74,25 +63,40 @@ function cellStatus([row, cell]) {
  * @return {string} for example: 'B10'
  */
 function attack() {
-  shot = getRandomCell();
-  return shot.toString().replace(',', '');
+  currentAttack = makeFire();
+	return getCellName(currentAttack);
 };
 
-function getRandomCell() {
-  const rowIdx = Math.floor(Math.random() * ROWS.length);
-  const colIdx  = Math.floor(Math.random() * ROWS.length);
-  let nextShot;
-  for (let row of BOARD.keys()) {
-    const index = BOARD.get(row).findIndex((el) => !el);
-    if (index !== -1) {
-      nextShot = [row, index + 1];
-      break;
-    }
-  }
-  return nextShot;
+var cellType = { empty: 0, miss: 1, hit: 2, sunk: 3 }
+
+var field = [...Array(10)].map(() => [...Array(10)].map(() => cellType.empty))
+
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+var alphabet = 'ABCDEFGHIJ';
+
+function makeFire() {
+  return empty[getRandomInt(0, empty.length)];
+}
+
+var empty = [...Array(100)].map((_, i) => [Math.floor(i / 10), i % 10]);
+
+
+
+var currentAttack = [getRandomInt(0, 10), getRandomInt(0,10), cellType.empty];
+
+function getCellName([x, y]) {
+  return `${alphabet[x]}${y+1}`;
 }
 
 export {
+  getCellName,
+  empty,
+  field,
   getName,
   attack,
   attackResult,
