@@ -26,10 +26,11 @@ import * as TeamPlayer1 from './players/Player1';
 import * as TeamPlayer2 from './players/Player2';
 import * as TeamPlayer3 from './players/Player3';
 import * as TeamPlayer4 from './players/Player4'; 
+import * as TeamPlayer5 from './players/Player5'; 
 
 
 var playerOne = new Player(TeamPlayer1);
-var playerTwo = new Player(TeamPlayer2);
+var playerTwo = new Player(TeamPlayer5);
 var turnCounter = null;
 var explodeImg=new Image();
 explodeImg.src="explode.jpeg";
@@ -191,7 +192,7 @@ function newGame() {
 function turnGame(playerOne, playerTwo) { //while players not lost request them to new turn else game finished
   if (playerLost(playerOne) == false && playerLost(playerTwo) == false) {
 		playerOne.turnCount++;
-    setTimeout( cpuTurn, 800, playerOne, playerTwo);
+    setTimeout( cpuTurn, 50, playerOne, playerTwo);
   }
 }
 
